@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { IndiaMap } from 'react-india-states-map';
 import { stateDataMap, getIntegrationColor, type StateData } from '@/data/stateData';
 
 interface InteractiveMapProps {
@@ -9,28 +10,42 @@ interface InteractiveMapProps {
 export const InteractiveMap = ({ onStateSelect, selectedState }: InteractiveMapProps) => {
   const [hoveredState, setHoveredState] = useState<string | null>(null);
 
-  const handleStateClick = (stateKey: string) => {
+  const handleStateClick = (stateCode: string, data: any) => {
+    const stateKey = stateCode.toLowerCase().replace(/\s+/g, '-');
     if (stateDataMap[stateKey]) {
       onStateSelect(stateDataMap[stateKey]);
     }
   };
 
-  const getStateStyle = (stateKey: string, integrationPercentage: number) => {
-    const baseColor = getIntegrationColor(integrationPercentage);
+  const handleStateHover = (stateCode: string, data: any) => {
+    const stateKey = stateCode.toLowerCase().replace(/\s+/g, '-');
+    setHoveredState(stateKey);
+  };
+
+  const handleStateMouseLeave = () => {
+    setHoveredState(null);
+  };
+
+  // Create state config for the map
+  const stateConfig = Object.keys(stateDataMap).reduce((config, stateKey) => {
+    const stateData = stateDataMap[stateKey];
+    const integrationColor = getIntegrationColor(stateData.integrationPercentage);
     const isSelected = selectedState === stateKey;
     const isHovered = hoveredState === stateKey;
     
-    return {
-      fill: baseColor,
-      stroke: isSelected ? 'hsl(var(--primary))' : isHovered ? 'hsl(var(--ring))' : '#e5e7eb',
+    config[stateData.name] = {
+      fillColor: integrationColor,
+      strokeColor: isSelected ? 'hsl(var(--primary))' : isHovered ? 'hsl(var(--ring))' : '#e5e7eb',
       strokeWidth: isSelected ? 3 : isHovered ? 2 : 1,
-      cursor: 'pointer',
-      opacity: isHovered || isSelected ? 0.9 : 0.8,
-      transition: 'all 0.2s ease-in-out'
+      hoverColor: 'hsl(var(--map-hover))',
+      selectedColor: 'hsl(var(--map-selected))'
     };
-  };
+    
+    return config;
+  }, {} as any);
 
-  // Simplified India map with major states
+  const defaultSelectedState = selectedState ? stateDataMap[selectedState]?.name : null;
+
   return (
     <div className="w-full h-full flex flex-col">
       <div className="mb-4">
@@ -43,121 +58,23 @@ export const InteractiveMap = ({ onStateSelect, selectedState }: InteractiveMapP
       </div>
       
       <div className="flex-1 relative bg-gray-50 rounded-lg border border-border overflow-hidden">
-        <svg
-          viewBox="0 0 800 600"
-          className="w-full h-full"
-          preserveAspectRatio="xMidYMid meet"
-        >
-          {/* Simplified state shapes for demonstration */}
-          
-          {/* Rajasthan */}
-          <path
-            d="M 120 180 L 220 170 L 230 220 L 200 260 L 140 250 Z"
-            style={getStateStyle('rajasthan', stateDataMap['rajasthan']?.integrationPercentage || 0)}
-            onMouseEnter={() => setHoveredState('rajasthan')}
-            onMouseLeave={() => setHoveredState(null)}
-            onClick={() => handleStateClick('rajasthan')}
+        <div className="w-full h-full p-4">
+          <IndiaMap
+            mapData={stateConfig}
+            onClick={handleStateClick}
+            onHover={handleStateHover}
+            onMouseLeave={handleStateMouseLeave}
+            selectedState={defaultSelectedState}
+            defaultFillColor="hsl(var(--muted))"
+            defaultStrokeColor="hsl(var(--border))"
+            defaultStrokeWidth={1}
+            hoverStrokeWidth={2}
+            selectedStrokeWidth={3}
+            hoverStrokeColor="hsl(var(--ring))"
+            selectedStrokeColor="hsl(var(--primary))"
+            size={600}
           />
-          
-          {/* Gujarat */}
-          <path
-            d="M 80 220 L 160 230 L 150 300 L 90 290 Z"
-            style={getStateStyle('gujarat', stateDataMap['gujarat']?.integrationPercentage || 0)}
-            onMouseEnter={() => setHoveredState('gujarat')}
-            onMouseLeave={() => setHoveredState(null)}
-            onClick={() => handleStateClick('gujarat')}
-          />
-          
-          {/* Maharashtra */}
-          <path
-            d="M 160 260 L 280 250 L 290 320 L 180 330 Z"
-            style={getStateStyle('maharashtra', stateDataMap['maharashtra']?.integrationPercentage || 0)}
-            onMouseEnter={() => setHoveredState('maharashtra')}
-            onMouseLeave={() => setHoveredState(null)}
-            onClick={() => handleStateClick('maharashtra')}
-          />
-          
-          {/* Karnataka */}
-          <path
-            d="M 200 330 L 290 325 L 285 400 L 195 405 Z"
-            style={getStateStyle('karnataka', stateDataMap['karnataka']?.integrationPercentage || 0)}
-            onMouseEnter={() => setHoveredState('karnataka')}
-            onMouseLeave={() => setHoveredState(null)}
-            onClick={() => handleStateClick('karnataka')}
-          />
-          
-          {/* Tamil Nadu */}
-          <path
-            d="M 240 400 L 320 395 L 310 470 L 230 475 Z"
-            style={getStateStyle('tamil-nadu', stateDataMap['tamil-nadu']?.integrationPercentage || 0)}
-            onMouseEnter={() => setHoveredState('tamil-nadu')}
-            onMouseLeave={() => setHoveredState(null)}
-            onClick={() => handleStateClick('tamil-nadu')}
-          />
-          
-          {/* Andhra Pradesh */}
-          <path
-            d="M 290 320 L 380 315 L 375 390 L 285 395 Z"
-            style={getStateStyle('andhra-pradesh', stateDataMap['andhra-pradesh']?.integrationPercentage || 0)}
-            onMouseEnter={() => setHoveredState('andhra-pradesh')}
-            onMouseLeave={() => setHoveredState(null)}
-            onClick={() => handleStateClick('andhra-pradesh')}
-          />
-          
-          {/* Telangana */}
-          <path
-            d="M 320 280 L 380 275 L 375 315 L 315 320 Z"
-            style={getStateStyle('telangana', stateDataMap['telangana']?.integrationPercentage || 0)}
-            onMouseEnter={() => setHoveredState('telangana')}
-            onMouseLeave={() => setHoveredState(null)}
-            onClick={() => handleStateClick('telangana')}
-          />
-          
-          {/* Madhya Pradesh */}
-          <path
-            d="M 220 170 L 360 160 L 350 240 L 230 250 Z"
-            style={getStateStyle('madhya-pradesh', stateDataMap['madhya-pradesh']?.integrationPercentage || 0)}
-            onMouseEnter={() => setHoveredState('madhya-pradesh')}
-            onMouseLeave={() => setHoveredState(null)}
-            onClick={() => handleStateClick('madhya-pradesh')}
-          />
-          
-          {/* Uttar Pradesh */}
-          <path
-            d="M 280 100 L 480 90 L 470 170 L 360 160 L 270 150 Z"
-            style={getStateStyle('uttar-pradesh', stateDataMap['uttar-pradesh']?.integrationPercentage || 0)}
-            onMouseEnter={() => setHoveredState('uttar-pradesh')}
-            onMouseLeave={() => setHoveredState(null)}
-            onClick={() => handleStateClick('uttar-pradesh')}
-          />
-          
-          {/* Bihar */}
-          <path
-            d="M 470 120 L 550 115 L 545 160 L 465 165 Z"
-            style={getStateStyle('bihar', stateDataMap['bihar']?.integrationPercentage || 0)}
-            onMouseEnter={() => setHoveredState('bihar')}
-            onMouseLeave={() => setHoveredState(null)}
-            onClick={() => handleStateClick('bihar')}
-          />
-          
-          {/* West Bengal */}
-          <path
-            d="M 545 160 L 600 155 L 595 220 L 540 225 Z"
-            style={getStateStyle('west-bengal', stateDataMap['west-bengal']?.integrationPercentage || 0)}
-            onMouseEnter={() => setHoveredState('west-bengal')}
-            onMouseLeave={() => setHoveredState(null)}
-            onClick={() => handleStateClick('west-bengal')}
-          />
-          
-          {/* Odisha */}
-          <path
-            d="M 470 200 L 540 195 L 535 260 L 465 265 Z"
-            style={getStateStyle('odisha', stateDataMap['odisha']?.integrationPercentage || 0)}
-            onMouseEnter={() => setHoveredState('odisha')}
-            onMouseLeave={() => setHoveredState(null)}
-            onClick={() => handleStateClick('odisha')}
-          />
-        </svg>
+        </div>
         
         {/* Legend */}
         <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-border">
